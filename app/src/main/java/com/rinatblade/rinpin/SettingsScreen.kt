@@ -63,8 +63,12 @@ fun SettingsScreen(vm: MainViewModel) {
     ) {
         item { ScreenTitle("Настройки", "Тема, шрифт и подключение к Pinduoduo") }
 
+        // ---- Источник результатов ----
+        item { SectionTitle("Откуда брать результаты") }
+        item { SourceCard(vm) }
+
         // ---- Подключение ----
-        item { SectionTitle("Подключение") }
+        item { SectionTitle("Ключи Pinduoduo API (для официального API)") }
         item { ApiCard(vm) }
 
         // ---- Темы ----

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Rin-pin</string>
+    <string name="a11y_description">Rin-pin читает только экран приложения Pinduoduo, пока вы ищете товар, и показывает найденное у себя. Больше ничего не читается.</string>
 </resources>

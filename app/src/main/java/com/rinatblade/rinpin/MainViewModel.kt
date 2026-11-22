@@ -8,9 +8,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -41,6 +43,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     val hasKeys: Boolean get() = clientId.isNotBlank() && clientSecret.isNotBlank()
 
+    // ---- источник результатов ----
+    var source by mutableIntStateOf(store.source)
+        private set
+
+    fun pickSource(i: Int) { source = i; store.source = i }
+
     // ---- поиск ----
     var query by mutableStateOf("")
     var queryZh by mutableStateOf("")
@@ -55,6 +63,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var empty by mutableStateOf(false)
         private set
+    var waitingApp by mutableStateOf(false)
+        private set
+    var needAccessibility by mutableStateOf(false)
+        private set
+    var webZh by mutableStateOf<String?>(null)
+        private set
+
+    private var waitJob: Job? = null
+
+    init {
+        viewModelScope.launch { Bridge.results.collect { onAppResult(it) } }
+    }
 
     fun search(text: String = query) {
         val q = text.trim()
@@ -65,38 +85,136 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         noKeys = false
         error = null
         empty = false
+        needAccessibility = false
         queryZh = ""
         viewModelScope.launch {
             try {
                 val zh = Translate.translate(q, "ru", "zh-CN")
                 queryZh = zh
-                if (!hasKeys) {
-                    noKeys = true
-                    return@launch
-                }
-                val id = clientId
-                val secret = clientSecret
-                val pidNow = pid
-                val found = Pdd.search(zh, id, secret, pidNow)
-                if (found.isEmpty()) {
-                    empty = true
-                    return@launch
-                }
-                offers = coroutineScope {
-                    found.map { o ->
-                        async {
-                            val ru = Translate.translate(o.title, "zh-CN", "ru")
-                            Pdd.withLinks(o.copy(titleRu = ru), id, secret, pidNow)
-                        }
-                    }.awaitAll()
+                when (source) {
+                    SRC_APP -> startApp(zh)
+                    SRC_WEB -> {
+                        webZh = zh
+                        loading = false
+                    }
+                    else -> {
+                        searchApi(zh)
+                        loading = false
+                    }
                 }
             } catch (e: PddException) {
                 error = "Pinduoduo ответил ошибкой: ${e.message}"
+                loading = false
             } catch (e: Exception) {
                 error = "Не удалось выполнить поиск. Проверьте интернет и попробуйте ещё раз."
-            } finally {
                 loading = false
             }
+        }
+    }
+
+    // --- источник 0: официальный API ---
+    private suspend fun searchApi(zh: String) {
+        if (!hasKeys) {
+            noKeys = true
+            return
+        }
+        val id = clientId
+        val secret = clientSecret
+        val pidNow = pid
+        val found = Pdd.search(zh, id, secret, pidNow)
+        if (found.isEmpty()) {
+            empty = true
+            return
+        }
+        offers = coroutineScope {
+            found.map { o ->
+                async {
+                    val ru = Translate.translate(o.title, "zh-CN", "ru")
+                    Pdd.withLinks(o.copy(titleRu = ru), id, secret, pidNow)
+                }
+            }.awaitAll()
+        }
+    }
+
+    // --- источник 1: приложение Pinduoduo, экран читает служба ---
+    private fun startApp(zh: String) {
+        if (!Bridge.connected) {
+            needAccessibility = true
+            loading = false
+            return
+        }
+        Bridge.begin(zh)
+        waitingApp = true
+        val opened = getApplication<Application>().openApp(Pdd.searchApp(zh))
+        if (!opened) {
+            Bridge.cancel()
+            waitingApp = false
+            loading = false
+            error = "Не удалось открыть приложение Pinduoduo. Оно установлено на телефоне?"
+            return
+        }
+        waitJob?.cancel()
+        waitJob = viewModelScope.launch {
+            delay(75_000)
+            if (waitingApp) {
+                error = "Не дождался результатов из Pinduoduo. Проверьте, что в приложении открылся поиск, и повторите (или выберите поиск через сайт в Настройках)."
+                cancelWait()
+            }
+        }
+    }
+
+    fun cancelWait() {
+        waitJob?.cancel()
+        Bridge.cancel()
+        waitingApp = false
+        loading = false
+    }
+
+    private suspend fun onAppResult(r: Bridge.Result) {
+        if (!waitingApp) return
+        waitJob?.cancel()
+        waitingApp = false
+        if (r.offers.isEmpty()) {
+            error = if (r.seenTexts == 0) {
+                "Rin-pin не увидел текст на экране Pinduoduo (приложение может скрывать содержимое). Попробуйте поиск через сайт в Настройках."
+            } else {
+                "Не удалось распознать товары на экране Pinduoduo. В Настройках нажмите «Скопировать диагностику» и пришлите мне текст — я подстрою разбор."
+            }
+            loading = false
+            return
+        }
+        showOffers(r.offers)
+    }
+
+    // --- источник 2: сайт Pinduoduo в окне Rin-pin ---
+    fun onWebResults(found: List<Offer>) {
+        webZh = null
+        loading = true
+        viewModelScope.launch {
+            val top = Pdd.pickTop(found, 5)
+            if (top.isEmpty()) {
+                empty = true
+                loading = false
+            } else {
+                showOffers(top)
+            }
+        }
+    }
+
+    fun closeWeb() {
+        webZh = null
+        loading = false
+    }
+
+    private suspend fun showOffers(found: List<Offer>) {
+        try {
+            offers = coroutineScope {
+                found.map { o -> async { o.copy(titleRu = Translate.translate(o.title, "zh-CN", "ru")) } }.awaitAll()
+            }
+        } catch (e: Exception) {
+            offers = found
+        } finally {
+            loading = false
         }
     }
 

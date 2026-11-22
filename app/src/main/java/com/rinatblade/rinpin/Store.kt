@@ -3,6 +3,10 @@ package com.rinatblade.rinpin
 import android.content.Context
 import org.json.JSONArray
 
+const val SRC_API = 0
+const val SRC_APP = 1
+const val SRC_WEB = 2
+
 /** Настройки и корзина — всё хранится на телефоне в SharedPreferences. */
 class Store(context: Context) {
     private val sp = context.getSharedPreferences("rinpin", Context.MODE_PRIVATE)
@@ -14,6 +18,11 @@ class Store(context: Context) {
     var fontFile: String
         get() = sp.getString("font", "") ?: ""
         set(v) { sp.edit().putString("font", v).apply() }
+
+    /** Откуда брать результаты: 0 — API Pinduoduo, 1 — приложение Pinduoduo, 2 — сайт Pinduoduo в Rin-pin. */
+    var source: Int
+        get() = sp.getInt("source", SRC_APP)
+        set(v) { sp.edit().putInt("source", v).apply() }
 
     var clientId: String
         get() = sp.getString("client_id", "") ?: ""

@@ -48,7 +48,7 @@ fun RinApp(vm: MainViewModel) {
         var tab by rememberSaveable { mutableIntStateOf(0) }
         BackHandler(enabled = tab != 0) { tab = 0 }
 
-        Scaffold(
+        if (vm.webZh != null) PddWebScreen(vm) else Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             bottomBar = {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {

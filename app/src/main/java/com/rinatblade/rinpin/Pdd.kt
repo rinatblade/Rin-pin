@@ -19,8 +19,8 @@ object Pdd {
     // ---- ссылки, которые работают и без ключей ----
     fun searchWeb(zh: String) = "https://mobile.yangkeduo.com/search_result.html?search_key=" + Net.enc(zh)
     fun searchApp(zh: String) = "pinduoduo://com.xunmeng.pinduoduo/search_result.html?search_key=" + Net.enc(zh)
-    private fun goodsWeb(id: String) = "https://mobile.yangkeduo.com/goods.html?goods_id=$id"
-    private fun goodsApp(id: String) = "pinduoduo://com.xunmeng.pinduoduo/goods.html?goods_id=$id"
+    fun goodsWeb(id: String) = "https://mobile.yangkeduo.com/goods.html?goods_id=$id"
+    fun goodsApp(id: String) = "pinduoduo://com.xunmeng.pinduoduo/goods.html?goods_id=$id"
 
     private fun md5(s: String): String =
         MessageDigest.getInstance("MD5").digest(s.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
@@ -66,8 +66,8 @@ object Pdd {
         }
 
     /** По одному лучшему товару от магазина; сначала рейтинг ≥ 4.7, потом ≥ 4.5, потом остальные; внутри — по продажам. */
-    private fun pickTop(all: List<Offer>, n: Int): List<Offer> {
-        val perShop = all.groupBy { it.mallId.ifBlank { it.shop } }
+    fun pickTop(all: List<Offer>, n: Int): List<Offer> {
+        val perShop = all.groupBy { it.mallId.ifBlank { it.shop }.ifBlank { it.key } }
             .map { (_, items) -> items.maxByOrNull { it.salesNum }!! }
         val result = ArrayList<Offer>()
         val tiers = listOf<(Offer) -> Boolean>({ it.rating >= 4.7 }, { it.rating >= 4.5 }, { true })
@@ -101,7 +101,7 @@ object Pdd {
         )
     }
 
-    private fun parseSales(tip: String): Long {
+    fun parseSales(tip: String): Long {
         val m = Regex("([0-9]+(?:\\.[0-9]+)?)\\s*([万亿]?)").find(tip) ?: return 0
         val n = m.groupValues[1].toDoubleOrNull() ?: return 0
         val mul = when (m.groupValues[2]) {

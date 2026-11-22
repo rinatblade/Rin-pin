@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -103,13 +104,37 @@ fun SearchScreen(vm: MainViewModel, onOpenSettings: () -> Unit) {
 
         if (vm.loading) {
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                    horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CircularProgressIndicator(Modifier.size(26.dp), strokeWidth = 3.dp)
-                    Spacer(Modifier.width(12.dp))
-                    Text("Ищу лучшие магазины…")
+                Column(Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(Modifier.size(26.dp), strokeWidth = 3.dp)
+                        Spacer(Modifier.width(12.dp))
+                        Text(if (vm.waitingApp) "Жду результаты из Pinduoduo…" else "Ищу лучшие магазины…")
+                    }
+                    if (vm.waitingApp) {
+                        Text(
+                            "Приложение Pinduoduo откроется само, Rin-pin прокрутит выдачу и вернётся сюда. Если не вернулся — переключитесь на Rin-pin вручную.",
+                            style = MaterialTheme.typography.bodySmall, color = c.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 8.dp),
+                        )
+                        TextButton(onClick = { vm.cancelWait() }) { Text("Отмена") }
+                    }
+                }
+            }
+        }
+
+        if (vm.needAccessibility) {
+            item {
+                InfoCard {
+                    Text("Чтобы Rin-pin мог читать результаты из приложения Pinduoduo, включите его в Специальных возможностях. Он читает только экран Pinduoduo и только во время поиска.", style = MaterialTheme.typography.bodyMedium)
+                    Text("Если переключатель серый: Информация о приложении → ⋮ → «Разрешить ограниченные настройки».", style = MaterialTheme.typography.bodySmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { ctx.openAccessibilitySettings() }, modifier = Modifier.weight(1f)) { Text("Включить", maxLines = 1) }
+                        FilledTonalButton(onClick = { ctx.openAppInfo() }, modifier = Modifier.weight(1f)) { Text("О приложении", maxLines = 1) }
+                    }
+                    FilledTonalButton(
+                        onClick = { vm.pickSource(SRC_WEB); vm.search() },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Искать через сайт Pinduoduo") }
                 }
             }
         }
