@@ -1,0 +1,79 @@
+# каталог в google/fonts | название в приложении
+# Берутся первые 40 семейств, у которых есть кириллица. Остальные — запасные.
+ptsans|PT Sans
+ptserif|PT Serif
+roboto|Roboto
+opensans|Open Sans
+montserrat|Montserrat
+ubuntu|Ubuntu
+lora|Lora
+merriweather|Merriweather
+playfairdisplay|Playfair Display
+raleway|Raleway
+oswald|Oswald
+firasans|Fira Sans
+sourcesans3|Source Sans
+exo2|Exo 2
+comfortaa|Comfortaa
+marckscript|Marck Script
+caveat|Caveat
+pacifico|Pacifico
+lobster|Lobster
+russoone|Russo One
+philosopher|Philosopher
+jura|Jura
+play|Play
+rubik|Rubik
+nunito|Nunito
+manrope|Manrope
+ibmplexsans|IBM Plex Sans
+ibmplexserif|IBM Plex Serif
+badscript|Bad Script
+neucha|Neucha
+pangolin|Pangolin
+kurale|Kurale
+cormorantgaramond|Cormorant Garamond
+alegreya|Alegreya
+alegreyasans|Alegreya Sans
+yanonekaffeesatz|Yanone Kaffeesatz
+amaticsc|Amatic SC
+ruslandisplay|Ruslan Display
+elmessiri|El Messiri
+scada|Scada
+# --- запасные ---
+didactgothic|Didact Gothic
+prostoone|Prosto One
+seymourone|Seymour One
+oranienbaum|Oranienbaum
+forum|Forum
+spectral|Spectral
+vollkorn|Vollkorn
+literata|Literata
+montserratalternates|Montserrat Alternates
+daysone|Days One
+arimo|Arimo
+tinos|Tinos
+cousine|Cousine
+tenorsans|Tenor Sans
+podkova|Podkova
+ledger|Ledger
+marmelad|Marmelad
+lobstertwo|Lobster Two
+underdog|Underdog
+stalinistone|Stalinist One
+rubikmonoone|Rubik Mono One
+bitter|Bitter
+arsenal|Arsenal
+cuprum|Cuprum
+lemonada|Lemonada
+balsamiqsans|Balsamiq Sans
+robotoslab|Roboto Slab
+robotocondensed|Roboto Condensed
+ptsansnarrow|PT Sans Narrow
+ubuntucondensed|Ubuntu Condensed
+nunitosans|Nunito Sans
+geologica|Geologica
+onest|Onest
+unbounded|Unbounded
+jetbrainsmono|JetBrains Mono
+kellyslab|Kelly Slab
